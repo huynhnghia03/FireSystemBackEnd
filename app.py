@@ -39,7 +39,10 @@ app.config['MYSQL_PASSWORD'] = '12345678'
 app.config['MYSQL_DB'] = 'firesystem'
 mysql = MySQL(app)
 
+# Model initialization before starting the server
+print("Initializing YOLOv8 model...")
 model = my_YoloV8.YOLOv8_ObjectCounter(model_file="best.pt")
+print("YOLOv8 model initialized.")
 
 
 app.secret_key = os.environ.get("FLASK_SECRET")
@@ -47,6 +50,12 @@ app.config['JWT_SECRET_KEY'] = 'your_jwt_secret_key'
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=24)
 jwt = JWTManager(app)
 
+# This function will be executed before handling the first request
+# @app.before_first_request
+# def initialize_model():
+#     global model
+#     model = my_YoloV8.YOLOv8_ObjectCounter(model_file="best.pt")
+#     print("YOLOv8 model initialized.")
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -159,7 +168,7 @@ def history():
         }
         countShrimp(Executed_DATA,counters)
         # print({"auth":True, "datas": Executed_DATA, "total" : total_shrimp,"big" : total_big_shrimp,"medium":total_medium_shrimp,"small":total_small_shrimp})
-        return jsonify({"auth":True, "datas": Executed_DATA, "total" : counters["total"],"big" : counters["big"],"medium":counters["medium"],"small":counters["small"]})
+        return jsonify({"auth":True, "datas": Executed_DATA, "total" : counters["total"],"fire" : counters["fire"],"smoke":counters["smoke"]})
  
     else:
         return jsonify({"auth":False})
@@ -249,6 +258,14 @@ def upload_file():
             }
             if(newObjectDataShrimp['total']>0):
                 send_email(email,from_email,sumShrimp,"C:/IT/FireSystem/BackEnd/static/image/logo/firesystemjpg.jpg","C:/IT/FireSystem/BackEnd"+file_name)
+            print(jsonify(
+                {
+"msg":msg,
+                 "Filename": file_name,
+                 "Info": newObjectDataShrimp,
+                "date":current_time,
+                 "video": False,
+                 'success': True }))
             return jsonify(
                 {
 "msg":msg,
@@ -358,7 +375,7 @@ def send_email(to_email, from_email, object_detected=1,logo_path=None, urgent_im
         # server.starttls()
         # server.login(from_email, 'your_password')  # Enter your email credentials
         server.sendmail(from_email, to_email, message.as_string())
-        server.quit()
+        # server.quit()
         print(f"Email sent to {to_email} successfully.")
     except Exception as e:
         print(f"Failed to send email: {e}")
@@ -390,6 +407,7 @@ def color():
 def random_color():
     return tuple(random.randint(0, 255) for _ in range(3))
 if __name__ == '__main__':
+
     app.run(host="0.0.0.0", port=os.environ.get(
         "FLASK_PORT"), debug=True)
 
